@@ -20,36 +20,43 @@ export class CoverCalculator {
     static defaults(){
         MODULE[NAME] = {
             coverData : {
-                0 : { 
-                    label : HELPER.localize("SCC.LoS_nocover"), 
-                    value : 0, 
-                    color : "0xff0000", 
-                    icon : "" 
+                0 : {
+                    label : HELPER.localize("SCC.LoS_nocover"),
+                    value : 0,
+                    color : "0xff0000",
+                    icon : ""
                 },
-                1 : { 
-                    label : HELPER.localize("SCC.LoS_halfcover"), 
-                    value : -2, 
-                    color : "0xffa500", 
-                    icon : `modules/${MODULE.data.name}/assets/cover-icons/Half_Cover.svg` 
+                1 : {
+                    label : HELPER.localize("SCC.LoS_quatercover"),
+                    value : -2,
+                    color : "0xffa500",
+                    icon : `modules/${MODULE.data.name}/assets/cover-icons/Q_Cover.svg`
                 },
-                2 : { 
-                    label : HELPER.localize("SCC.LoS_34cover"), 
-                    value : -5, 
-                    color : "0xffff00", 
-                    icon : `modules/${MODULE.data.name}/assets/cover-icons/ThreeQ_Cover.svg` 
+                2 : {
+                    label : HELPER.localize("SCC.LoS_halfcover"),
+                    value : -3,
+                    color : "0xffa500",
+                    icon : `modules/${MODULE.data.name}/assets/cover-icons/Half_Cover.svg`
                 },
-                3 : { 
-                    label : HELPER.localize("SCC.LoS_fullcover"), 
-                    value : -40, 
-                    color : "0x008000", 
+                3 : {
+                    label : HELPER.localize("SCC.LoS_34cover"),
+                    value : -5,
+                    color : "0xffff00",
+                    icon : `modules/${MODULE.data.name}/assets/cover-icons/ThreeQ_Cover.svg`
+                },
+                4 : {
+                    label : HELPER.localize("SCC.LoS_fullcover"),
+                    value : -40,
+                    color : "0x008000",
                     icon : `modules/${MODULE.data.name}/assets/cover-icons/Full_Cover.svg`
                 },
             },
             wall : {
-                default : 3, 
+                default : 4,
                 flag : "coverLevel",
                 cover : {
-                    3 : [0,1,1,2,3],
+                    4 : [0,1,2,3,4],
+                    3 : [0,1,2,2,3],
                     2 : [0,1,1,2,2],
                     1 : [0,0,0,1,1],
                 },
@@ -58,7 +65,8 @@ export class CoverCalculator {
                 default : 0,
                 flag : "coverLevel",
                 cover : {
-                    3 : [0,1,1,2,3],
+                    4 : [0,1,2,3,4],
+                    3 : [0,1,2,2,3],
                     2 : [0,1,1,2,2],
                     1 : [0,0,0,1,1],
                 },
@@ -67,16 +75,18 @@ export class CoverCalculator {
                 default : 1,
                 flag : "coverLevel",
                 cover : {
-                    3 : [0,1,1,2,3],
+                    4 : [0,1,2,3,4],
+                    3 : [0,1,2,2,3],
                     2 : [0,1,1,2,2],
                     1 : [0,1,1,1,1],
                 }
             },
             ignoreCover:{ // Defining what number relates to what cover ignore level
                 "none":0,
-                "half":1,
-                "threeQuarter":2,
-                "full":3
+                "quater":1,
+                "half":2,
+                "threeQuarter":3,
+                "full":4
             },
         }
     }
@@ -97,7 +107,7 @@ export class CoverCalculator {
             },
             losOnTarget : {
                 scope : "client", config, group : "system", default : 0, type : Boolean,
-            }, 
+            },
             losWithTiles : {
                 scope : "world", config, group : "system", default : false, type : Boolean,
             },
@@ -105,7 +115,7 @@ export class CoverCalculator {
                 scope : "world", config, group : "system", default : false, type : Boolean,
             },
             coverTint : {
-                scope : "world", config, group : "system", default : 0, type : String, 
+                scope : "world", config, group : "system", default : 0, type : String,
                 choices : {
                     "DarkRed" : HELPER.localize("option.coverTint.red"),
                     "CadetBlue" : HELPER.localize("option.coverTint.blue"),
@@ -114,7 +124,7 @@ export class CoverCalculator {
                 },
             },
             coverApplication : {
-                scope : "world", config, group : "system", default : 0, type : Number, 
+                scope : "world", config, group : "system", default : 0, type : Number,
                 choices : {
                     0: HELPER.format("option.default.disabled"),
                     1: HELPER.format("option.coverApplication.manual"),
@@ -143,9 +153,10 @@ export class CoverCalculator {
             section: "Feats",
             choices: {
                 0: HELPER.localize("SCC.flagsNoCoverOptionNone"),
-                1: HELPER.localize("SCC.flagsNoCoverOptionHalf"),
-                2: HELPER.localize("SCC.flagsNoCoverOptionThreeQ"),
-                3: HELPER.localize("SCC.flagsNoCoverOptionFull")
+                1: HELPER.localize("SCC.flagsNoCoverOptionQuater"),
+                2: HELPER.localize("SCC.flagsNoCoverOptionHalf"),
+                3: HELPER.localize("SCC.flagsNoCoverOptionThreeQ"),
+                4: HELPER.localize("SCC.flagsNoCoverOptionFull")
             },
             type: Number
         };
@@ -223,10 +234,10 @@ export class CoverCalculator {
                 queueUpdate( () => {
                     return Cover._removeEffect(token);
                 });
-            }            
+            }
         }
     }
-  
+
     static async _renderChatMessage(app, html, data){
         if (app.getFlag(MODULE.data.name, 'coverMessage') && HELPER.setting(MODULE.data.name, "coverApplication") > 0 ){
             await HELPER.waitFor(() => !!canvas?.ready);
@@ -240,21 +251,26 @@ export class CoverCalculator {
 
             if (!token) return new Error(HELPER.localize("error.token.missing"));
 
-            const a = html.find('#half')[0];
-            const b = html.find('#34')[0];
-            const c = html.find('#full')[0];
+
+            const a = html.find('#quater')[0];
+            const b = html.find('#half')[0];
+            const c = html.find('#34')[0];
+            const d = html.find('#full')[0];
             const l = token.getCoverEffect()?.getFlag(MODULE.data.name, "level");
 
             if (l == 1) a.style.background = HELPER.setting(MODULE.data.name, "coverTint");
-            else 
+            else
             if (l == 2) b.style.background = HELPER.setting(MODULE.data.name, "coverTint");
-            else 
+            else
             if (l == 3) c.style.background = HELPER.setting(MODULE.data.name, "coverTint");
+            else
+            if (l == 4) d.style.background = HELPER.setting(MODULE.data.name, "coverTint");
 
             //add listeners
-            a.onclick =  () => Cover._toggleEffect(token, a, [b,c], 1);
-            b.onclick = () => Cover._toggleEffect(token, b, [a,c], 2);
-            c.onclick = () => Cover._toggleEffect(token, c, [a,b], 3);
+            a.onclick = () => Cover._toggleEffect(token, a, [b,c], 1);
+            b.onclick = () => Cover._toggleEffect(token, a, [b,c], 2);
+            c.onclick = () => Cover._toggleEffect(token, b, [a,c], 3);
+            d.onclick = () => Cover._toggleEffect(token, c, [a,b], 4);
         }
     }
 
@@ -324,7 +340,7 @@ export class CoverCalculator {
         if (!canvas.ready) return false;
 
         const layer = canvas.activeLayer;
-        
+
         if (!(layer instanceof TokenLayer)) return false;
 
         const hovered = layer.placeables.find(t => t._isHoverIn);
@@ -353,7 +369,7 @@ export class CoverCalculator {
                 if (HELPER.setting(MODULE.data.name, "coverApplication") == 2) await cover.addEffect();
                 await cover.toMessage();
             });
-        }         
+        }
     }
 
     static async _targetToken(user, target, onOff) {
@@ -368,12 +384,12 @@ export class CoverCalculator {
                 queueUpdate( async () => {
                     await Cover._removeEffect(selected);
                 });
-            }            
+            }
         }
     }
 
     static async _updateCombat(combat, changed /*, options, userId */) {
-        /** only concerned with turn changes during active combat that is NOT turn 1 */  
+        /** only concerned with turn changes during active combat that is NOT turn 1 */
         if (HELPER.setting(MODULE.data.name, "removeCover") && HELPER.isFirstGM() && HELPER.isTurnChange(combat, changed)) {
             const token = combat.combatants.get(combat.previous.combatantId)?.token?.object;
 
@@ -383,7 +399,7 @@ export class CoverCalculator {
                   });
             }
         }
-    } 
+    }
 
     /**
     * Prototype Patch Functions
@@ -392,7 +408,7 @@ export class CoverCalculator {
         Token.prototype.ignoresCover = function() {
             let flagValue = this.actor?.getFlag(game.system.id, "helpersIgnoreCover") ?? 0;
             if (flagValue === true||flagValue === "true"){
-                // used to be a boolean flag, if the flag is true either 
+                // used to be a boolean flag, if the flag is true either
                 // ,the value or a string due to AE shenanigans, treat is as it would have been before
                 flagValue=MODULE[NAME].ignoreCover.threeQuarter
             }
@@ -442,7 +458,7 @@ export class CoverCalculator {
             /* otherwise, make an intelligent guess as to the default state based on the wall itself */
             /* sight vs sense is a 0.9 vs 0.8 issue -- prefer 0.9, but fall back to 0.8 */
             const sense = this.document.door < CONST.WALL_DOOR_TYPES.DOOR ? this.document.sight
-                : this.document.ds == CONST.WALL_DOOR_STATES.OPEN ? CONST.WALL_SENSE_TYPES.NONE 
+                : this.document.ds == CONST.WALL_DOOR_STATES.OPEN ? CONST.WALL_SENSE_TYPES.NONE
                 : this.document.sight;
 
             return sense >= CONST.WALL_SENSE_TYPES.LIMITED ? data.default : 0;
@@ -481,7 +497,7 @@ class Cover {
     };
 
     constructor(origin, target, padding = 5, coordinates = {}) {
-        if (origin.id === target.id) return new Error("Token Error");       
+        if (origin.id === target.id) return new Error("Token Error");
 
         this.data.origin.object = origin;
         this.data.target.object = target;
@@ -492,7 +508,7 @@ class Cover {
     calculate() {
         if (HELPER.setting(MODULE.data.name, "debugDrawing")) {
             Cover._removeRays();
-        }        
+        }
 
         this.buildTokenData();
         this.buildTileData();
@@ -511,7 +527,7 @@ class Cover {
 
         if (HELPER.setting(MODULE.data.name, "debugDrawing")) {
             this.data.tokens.shapes.forEach(shape => shape.draw());
-        }        
+        }
     }
 
     buildTileData(){
@@ -522,7 +538,7 @@ class Cover {
         if (HELPER.setting(MODULE.data.name, "debugDrawing")) {
             this.data.tiles.shapes.forEach(shape => shape.draw());
         }
-        
+
     }
 
     buildWallData(){
@@ -536,7 +552,7 @@ class Cover {
         if (HELPER.setting(MODULE.data.name, "debugDrawing")) {
             this.data.walls.shapes.forEach(shape => shape.draw());
         }
-        
+
     }
 
     buildPoints(){
@@ -551,7 +567,7 @@ class Cover {
                 for(let b = 0; b < d; b++) {
                     let s = Shape.buildRectangle({
                         x : this.data.origin.object.x + (a * canvas.grid.size),
-                        y : this.data.origin.object.y + (b * canvas.grid.size), 
+                        y : this.data.origin.object.y + (b * canvas.grid.size),
                         w : canvas.grid.size,
                         h : canvas.grid.size,
                     });
@@ -567,7 +583,7 @@ class Cover {
 
         if (HELPER.setting(MODULE.data.name, "debugDrawing")) {
             this.data.origin.shapes.forEach(shape => shape.draw());
-        }        
+        }
     }
 
     buildSquares(){
@@ -579,7 +595,7 @@ class Cover {
             for(let b = 0; b < d; b++) {
                 let s = Shape.buildRectangle({
                     x : this.data.target.object.x + (a * canvas.grid.size),
-                    y : this.data.target.object.y + (b * canvas.grid.size), 
+                    y : this.data.target.object.y + (b * canvas.grid.size),
                     w : canvas.grid.size,
                     h : canvas.grid.size,
                 }, this.data.padding);
@@ -588,14 +604,14 @@ class Cover {
                 s.points.forEach(p =>{
                     if (p instanceof Point && !this.data.target.points.reduce((a,b,i,o) => o.length == 0 ? a : (a || b.is(p)), false)) {
                         this.data.target.points.push(p);
-                    }                    
+                    }
                 });
             }
         }
 
         if (HELPER.setting(MODULE.data.name, "debugDrawing")) {
             this.data.target.shapes.forEach(shape => shape.draw());
-        }        
+        }
     }
 
     static _processLimitedSightCollisions(results = []) {
@@ -608,14 +624,14 @@ class Cover {
         const processed = results.reduce((acc, curr) => {
 
             if (acc.numSeen < toRemove) {
-                acc.numSeen++; 
+                acc.numSeen++;
             } else {
                 acc.results.push(curr.cover);
             }
 
             return acc;
-        
-        }, 
+
+        },
         {
             results: [], numSeen: 0
         });
@@ -653,7 +669,7 @@ class Cover {
                     tokens : getResult(
                         MODULE[NAME].token.cover,
                         collisions.map(c => c.tokens),
-                    ),          
+                    ),
                     walls : getResult(
                         MODULE[NAME].wall.cover,
                         collisions.map(c => c.walls),
@@ -672,9 +688,9 @@ class Cover {
         this.data.results.raw = results;
         this.data.results.ignore = this.data.origin.object.ignoresCover();
         this.data.results.corners = 0;
-        this.data.results.cover = results.reduce((a,b) => Math.min(a, b.reduce((c,d) => Math.min(c, d.total), 3)),3);
-        // If the current cover value is under the ignore threshold set cover to 0. ignore theshold goes from 1 to 3, cover from 0 to 3
-        // none, half, threequarter, full
+        this.data.results.cover = results.reduce((a,b) => Math.min(a, b.reduce((c,d) => Math.min(c, d.total), 4)),4);
+        // If the current cover value is under the ignore threshold set cover to 0. ignore theshold goes from 1 to 4, cover from 0 to 4
+        // none, quater, half, threequarter, full
         this.data.results.cover = this.data.results.cover <= this.data.results.ignore ? 0 : this.data.results.cover;
         this.data.results.label = MODULE[NAME].coverData[this.data.results.cover ?? 0].label;
         this.data.results.value = MODULE[NAME].coverData[this.data.results.cover ?? 0].value;
@@ -705,27 +721,30 @@ class Cover {
                 </div>
             </div>
         `;
-        
+
         if (HELPER.setting(MODULE.data.name, "coverApplication") > 0) {
             content += `
                 <div class="cover-calc">
-                    <button class="cover-button half ${appliedCover == 1 ? "active" : ""} " id="half">
+                    <button class="cover-button quater ${appliedCover == 1 ? "active" : ""} " id="quater">
                         <img src="${MODULE[NAME].coverData[1].icon}">${HELPER.localize("SCC.LoS_halfcover")}
                     </button>
+                    <button class="cover-button half ${appliedCover == 1 ? "active" : ""} " id="half">
+                        <img src="${MODULE[NAME].coverData[2].icon}">${HELPER.localize("SCC.LoS_halfcover")}
+                    </button>
                     <button class="cover-button quarters ${appliedCover == 2 ? "active" : ""} " id="34">
-                        <img src="${MODULE[NAME].coverData[2].icon}">${HELPER.localize("SCC.LoS_34cover")}
+                        <img src="${MODULE[NAME].coverData[3].icon}">${HELPER.localize("SCC.LoS_34cover")}
                     </button>
                     <button class="cover-button full ${appliedCover == 3 ? "active" : ""} " id="full">
-                        <img src="${MODULE[NAME].coverData[3].icon}">${HELPER.localize("SCC.LoS_fullcover")}
+                        <img src="${MODULE[NAME].coverData[4].icon}">${HELPER.localize("SCC.LoS_fullcover")}
                     </button>
                 </div>
             `;
         }
-        
+
         return await ChatMessage.create({
             whisper : HELPER.setting(MODULE.data.name, "whisperToSelf")?[game.user]:ChatMessage.getWhisperRecipients("GM"),
             speaker : { alias : HELPER.localize("setting.coverApplication.name") },
-            flags : {[MODULE.data.name] : { 
+            flags : {[MODULE.data.name] : {
                 ["coverMessage"] : true,
                 ["tokenUuid"] : this.data.origin.object.document.uuid,
             }},
@@ -744,20 +763,20 @@ class Cover {
     static _removeRays() {
         for (let child of canvas.tiles.children.filter(c => c.constructor.name === "z")) {
             canvas.tiles.removeChild(child);
-        }        
+        }
     }
 
     static async _addEffect(token, cover) {
         const { label, value } = MODULE[NAME].coverData[cover];
-        await Cover._removeEffect(token);    
+        await Cover._removeEffect(token);
         if(cover == 0) return;
 
         const effectData = {
             changes : ["rwak", "rsak", "mwak", "msak"].map(s => ({ key : `data.bonuses.${s}.attack`, mode : CONST.ACTIVE_EFFECT_MODES.ADD , value })),
             icon : MODULE[NAME].coverData[cover].icon,
             label : `DnD5e Helpers - ${label}`,
-            flags : { [MODULE.data.name] : { 
-                ["cover"] : true, 
+            flags : { [MODULE.data.name] : {
+                ["cover"] : true,
                 ["level"] : cover }
             },
             disabled : false, duration : {rounds : 1}, tint : "#747272",
@@ -773,7 +792,7 @@ class Cover {
 
     static async _toggleEffect(token, button, otherButtons, cover){
         let removed = await Cover._removeEffect(token);
-        
+
         if (!removed || removed.reduce((a,b) => a || b.getFlag(MODULE.data.name, 'level') !== cover, false)) {
             Cover._addEffect(token, cover);
             button.style.background = HELPER.setting(MODULE.data.name, "coverTint");

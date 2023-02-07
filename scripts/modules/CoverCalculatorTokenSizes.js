@@ -56,6 +56,9 @@ export class CoverCalculatorTokenSizes {
             noDeadTokenSizes : {
                 scope : "world", config, group : "token-sizes", default : "", type : String,
             },
+            quaterDeadTokenSizes : {
+                scope : "world", config, group : "token-sizes", default : "", type : String,
+            },
             halfDeadTokenSizes : {
                 scope : "world", config, group : "token-sizes", default : "", type : String,
             },
@@ -99,7 +102,7 @@ export class CoverCalculatorTokenSizes {
                 if(!!size) console.error(`Cover TokenSizes: ${size} is not a valid size`);
                 continue;
             }
-            MODULE[NAME][size].cover = 2
+            MODULE[NAME][size].cover = 3
         }
 
         let noDeadCover = HELPER.setting(MODULE.data.name, "noDeadTokenSizes").split(",")
@@ -111,13 +114,22 @@ export class CoverCalculatorTokenSizes {
             MODULE[NAME][size].dead = 0
         }
 
+        let quaterDead = HELPER.setting(MODULE.data.name, "quaterDeadTokenSizes").split(",")
+        for (let size of quaterDead) {
+            if (!keys.includes(size)) {
+                if(!!size) console.error(`Cover TokenSizes: ${size} is not a valid size`);
+                continue;
+            }
+            MODULE[NAME][size].dead = 1
+        }
+
         let halfDead = HELPER.setting(MODULE.data.name, "halfDeadTokenSizes").split(",")
         for (let size of halfDead) {
             if (!keys.includes(size)) {
                 if(!!size) console.error(`Cover TokenSizes: ${size} is not a valid size`);
                 continue;
             }
-            MODULE[NAME][size].dead = 1
+            MODULE[NAME][size].dead = 2
         }
 
         let quarterDead = HELPER.setting(MODULE.data.name, "threeQuartersDeadTokenSizes").split(",")
@@ -126,7 +138,7 @@ export class CoverCalculatorTokenSizes {
                 if(!!size) console.error(`Cover TokenSizes: ${size} is not a valid size`);
                 continue;
             }
-            MODULE[NAME][size].dead = 2
+            MODULE[NAME][size].dead = 3
         }
 
         let fullDead = HELPER.setting(MODULE.data.name, "fullDeadTokenSizes").split(",")
@@ -135,7 +147,7 @@ export class CoverCalculatorTokenSizes {
                 if(!!size) console.error(`Cover TokenSizes: ${size} is not a valid size`);
                 continue;
             }
-            MODULE[NAME][size].dead = 3
+            MODULE[NAME][size].dead = 4
         }
     }
 
